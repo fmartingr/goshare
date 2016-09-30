@@ -96,7 +96,8 @@ func main() {
 	}
 
 	// Copy file to temp folder with new name
-	newFileName := uuid.NewV4().String()
+	newFileName := fmt.Sprintf("%s%s",
+		uuid.NewV4().String(), filepath.Ext(*path))
 
 	// Create ssh connection
 	sshConfig := &ssh.ClientConfig{
