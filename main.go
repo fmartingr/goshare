@@ -1,18 +1,29 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
+	"path/filepath"
 	"syscall"
-	"github.com/pkg/sftp"
-	"github.com/satori/go.uuid"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"golang.org/x/crypto/ssh"
+	"github.com/pkg/sftp" // SFTP connection
+	"github.com/satori/go.uuid" // UUID Generation
+	"github.com/shibukawa/configdir" // Configuration file
+	"gopkg.in/alecthomas/kingpin.v2" // CLI helper
+	"golang.org/x/crypto/ssh" // SSH Session
 )
 
 func PublicKeyFile(file string) ssh.AuthMethod {
+	// Check for ~ characters and replace accordingly
+	if file[:2] == "~/" {
+		usr, _ := user.Current()
+		dir := usr.HomeDir
+		file = filepath.Join(dir, file[2:])
+	}
+
 	buffer, err := ioutil.ReadFile(file)
 	if err != nil {
 		fmt.Println("Error reading SSH key")
@@ -43,12 +54,11 @@ type Configuration struct {
 var (
 	path = kingpin.Arg("path", "Path to file you want to share").Required().String()
 	MAX_PACKET_SIZE = 1<<15
+	configDirs = configdir.New("dictget", "goshare")
 )
 
-func main() {
-	kingpin.Parse()
-
-	// Configuration
+func getBaseConfiguration() Configuration {
+	// Creates the base configuration options
 	config := Configuration{}
 	config.ShareUrl = "http://share.example.com/%s"
 	config.RemotePath = "/var/www/"
@@ -57,6 +67,26 @@ func main() {
 		User: "share_user",
 		Key: "~/.ssh/id_rsa",
 		Port: 22,
+	}
+	return config
+}
+
+func main() {
+	kingpin.Parse()
+
+	// Configuration
+	config := getBaseConfiguration()
+
+	folder := configDirs.QueryFolderContainsFile("config.json")
+
+	if folder != nil {
+		data, _ := folder.ReadFile("config.json")
+		json.Unmarshal(data, &config)
+	} else {
+		folders := configDirs.QueryFolders(configdir.Global)
+		jsonConfig, _ := json.Marshal(config)
+		folders[0].WriteFile("config.json", jsonConfig)
+		log.Fatal("Unable to read config file, created base configuration.")
 	}
 
 	// Check if path exists and if it isn't a directory
