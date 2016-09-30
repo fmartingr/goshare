@@ -109,9 +109,7 @@ func main() {
 	}
 
 	// Show sharing URL
-	fmt.Println("Here's the URL to share your file:")
 	fmt.Printf(config.ShareUrl, newFileName)
-	fmt.Println()
 
 	os.Exit(0)
 }
