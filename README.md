@@ -11,15 +11,8 @@ I started to move away from private cloud services and one feature I missed was 
 
 This made me think, what if I could share easily any kind of file...?
 
-## Installation
 
-TODO
-
-## Usage
-
-TODO (depends on [Installation](#installation))
-
-## How it works
+### How it works
 
 The process is simple and as follow:
 
@@ -27,6 +20,19 @@ The process is simple and as follow:
 2. A random filename is generated (based on UUID4 spec).
 3. An SSH connection is made and the file is uploaded.
 4. You will see in the output the URL to your uploaded file.
+
+
+## Installation
+
+```
+go get github.com/dictget/goshare
+```
+
+## Usage
+
+```
+goshare --help
+```
 
 ## Configuration
 
