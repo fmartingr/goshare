@@ -3,8 +3,6 @@ GoShare
 
 Easy share files on your own terms.
 
-> :warning: **Release advice**: There's no *release* as of yet. The config file may change in the process until the final steps of the [proof of concept](https://github.com/fmartingr/goshare/projects/1) are finished.
-
 ## Why?
 
 I started to move away from private cloud services and one feature I missed was the ability to easily share screenshots when I took them.
@@ -44,9 +42,9 @@ If you don't have a configuration file the first run will create one for you and
     "User": "ssh username",
     "Host": "ssh host/ip",
     "Key": "~/.ssh/id_rsa",
-    "Port": 22
+    "Port": 22,
+    "RemotePath": "path in the remote server to upload the file"
   },
-  "RemotePath": "path in the remote server to upload the file",
   "ShareUrl": "http://share.example.com/%s"
 }
 ```
