@@ -43,11 +43,11 @@ type SSHConfiguration struct {
 	Host string
 	Key string
 	Port int
+	RemotePath string
 }
 
 type Configuration struct {
 	SSH SSHConfiguration
-	RemotePath string
 	ShareUrl string
 }
 
@@ -61,12 +61,12 @@ func getBaseConfiguration() Configuration {
 	// Creates the base configuration options
 	config := Configuration{}
 	config.ShareUrl = "http://share.example.com/%s"
-	config.RemotePath = "/var/www/"
 	config.SSH = SSHConfiguration{
 		Host: "share.example.com",
 		User: "share_user",
 		Key: "~/.ssh/id_rsa",
 		Port: 22,
+		RemotePath: "/var/www/",
 	}
 	return config
 }
@@ -122,7 +122,7 @@ func main() {
 	}
 	defer client.Close()
 
-	destPath := fmt.Sprintf("%s/%s", config.RemotePath, newFileName)
+	destPath := fmt.Sprintf("%s/%s", config.SSH.RemotePath, newFileName)
 
 	w, err := client.OpenFile(destPath, syscall.O_CREAT | syscall.O_RDWR)
 	if err != nil {
