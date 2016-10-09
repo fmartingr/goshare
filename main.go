@@ -16,10 +16,16 @@ import (
 	"golang.org/x/crypto/ssh" // SSH Session
 )
 
+var (
+	path = kingpin.Arg("path", "Path to file you want to share").Required().String()
+	MAX_PACKET_SIZE = 1<<15
+	configDirs = configdir.New("dictget", "goshare")
+	usr, _ = user.Current()
+)
+
 func PublicKeyFile(file string) ssh.AuthMethod {
 	// Check for ~ characters and replace accordingly
 	if file[:2] == "~/" {
-		usr, _ := user.Current()
 		dir := usr.HomeDir
 		file = filepath.Join(dir, file[2:])
 	}
@@ -51,12 +57,6 @@ type Configuration struct {
 	ShareUrl string
 }
 
-var (
-	path = kingpin.Arg("path", "Path to file you want to share").Required().String()
-	MAX_PACKET_SIZE = 1<<15
-	configDirs = configdir.New("dictget", "goshare")
-)
-
 func getBaseConfiguration() Configuration {
 	// Creates the base configuration options
 	config := Configuration{}
@@ -77,13 +77,15 @@ func main() {
 	// Configuration
 	config := getBaseConfiguration()
 
+	configDirs.LocalPath = filepath.Join(usr.HomeDir, ".config", "goshare")
+
 	folder := configDirs.QueryFolderContainsFile("config.json")
 
 	if folder != nil {
 		data, _ := folder.ReadFile("config.json")
 		json.Unmarshal(data, &config)
 	} else {
-		folders := configDirs.QueryFolders(configdir.Global)
+		folders := configDirs.QueryFolders(configdir.Local)
 		jsonConfig, _ := json.Marshal(config)
 		folders[0].WriteFile("config.json", jsonConfig)
 		log.Fatal("Unable to read config file, created base configuration.")
