@@ -16,10 +16,15 @@ import (
 	"golang.org/x/crypto/ssh" // SSH Session
 )
 
+var (
+	Path = kingpin.Arg("path", "Path to file you want to share").Required().String()
+	configDirs = configdir.New("dictget", "goshare")
+	usr, _ = user.Current()
+)
+
 func PublicKeyFile(file string) ssh.AuthMethod {
 	// Check for ~ characters and replace accordingly
 	if file[:2] == "~/" {
-		usr, _ := user.Current()
 		dir := usr.HomeDir
 		file = filepath.Join(dir, file[2:])
 	}
@@ -51,12 +56,6 @@ type Configuration struct {
 	ShareUrl string
 }
 
-var (
-	path = kingpin.Arg("path", "Path to file you want to share").Required().String()
-	MAX_PACKET_SIZE = 1<<15
-	configDirs = configdir.New("dictget", "goshare")
-)
-
 func getBaseConfiguration() Configuration {
 	// Creates the base configuration options
 	config := Configuration{}
@@ -77,27 +76,29 @@ func main() {
 	// Configuration
 	config := getBaseConfiguration()
 
+	configDirs.LocalPath = filepath.Join(usr.HomeDir, ".config", "goshare")
+
 	folder := configDirs.QueryFolderContainsFile("config.json")
 
 	if folder != nil {
 		data, _ := folder.ReadFile("config.json")
 		json.Unmarshal(data, &config)
 	} else {
-		folders := configDirs.QueryFolders(configdir.Global)
+		folders := configDirs.QueryFolders(configdir.Local)
 		jsonConfig, _ := json.Marshal(config)
 		folders[0].WriteFile("config.json", jsonConfig)
 		log.Fatal("Unable to read config file, created base configuration.")
 	}
 
 	// Check if path exists and if it isn't a directory
-	stat, err := os.Stat(*path)
+	stat, err := os.Stat(*Path)
 	if os.IsNotExist(err) || stat.IsDir() {
-		log.Fatalf("%s not found or it isn't a file\n", *path)
+		log.Fatalf("%s not found or it isn't a file\n", *Path)
 	}
 
 	// Copy file to temp folder with new name
 	newFileName := fmt.Sprintf("%s%s",
-		uuid.NewV4().String(), filepath.Ext(*path))
+		uuid.NewV4().String(), filepath.Ext(*Path))
 
 	// Create ssh connection
 	sshConfig := &ssh.ClientConfig{
@@ -115,7 +116,8 @@ func main() {
 	}
 	defer connection.Close()
 
-	client, err := sftp.NewClient(connection, sftp.MaxPacket(MAX_PACKET_SIZE))
+	MaxPacketSize := 1<<15
+	client, err := sftp.NewClient(connection, sftp.MaxPacket(MaxPacketSize))
 
 	if err != nil {
 		log.Fatal("Unable to start SFTP connection")
@@ -130,7 +132,7 @@ func main() {
 	}
 	defer w.Close()
 
-	srcFile, err := ioutil.ReadFile(*path)
+	srcFile, err := ioutil.ReadFile(*Path)
 	if err != nil {
 		log.Fatal(err)
 	}
