@@ -18,7 +18,7 @@ import (
 
 var (
 	Path = kingpin.Arg("path", "Path to file you want to share").Required().String()
-	configDirs = configdir.New("dictget", "goshare")
+	configDirs = configdir.New("fmartingr", "goshare")
 	usr, _ = user.Current()
 )
 

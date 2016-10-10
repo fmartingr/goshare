@@ -23,7 +23,7 @@ The process is simple and as follow:
 ## Installation
 
 ```
-go get github.com/dictget/goshare
+go get -u github.com/fmartingr/goshare
 ```
 
 ## Usage
